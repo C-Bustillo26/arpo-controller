@@ -23,24 +23,34 @@ def log_and_print(message: str):
 
 
 def get_grid_frequency():
+    """
+    Placeholder for future frequency measurement.
+    Replace this with real measurement once your sensing method is finalized.
+    """
     return 60.0
 
 
 def switch_to_backup(relay, inverter):
     log_and_print("[System] Grid failed. Starting backup transfer sequence.")
+
     inverter.start()
     time.sleep(TRANSFER_DELAY)
+
     relay.switch_to_battery()
     time.sleep(TRANSFER_DELAY)
+
     log_and_print("[System] Backup transfer complete.")
 
 
 def switch_to_grid(relay, inverter):
     log_and_print("[System] Grid stable. Starting return-to-grid sequence.")
+
     relay.switch_to_grid()
     time.sleep(TRANSFER_DELAY)
+
     inverter.stop()
     time.sleep(TRANSFER_DELAY)
+
     log_and_print("[System] Return-to-grid complete.")
 
 
@@ -84,6 +94,7 @@ def main():
                     if system_mode != "BACKUP":
                         switch_to_backup(relay, inverter)
                         system_mode = "BACKUP"
+
             else:
                 if grid_restorable:
                     if system_mode != "GRID":
