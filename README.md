@@ -1,22 +1,60 @@
 # ARPO Controller
 
-ARPO (Automated Reflex to Power Outage) controller for Raspberry Pi using the Waveshare High-Pricision AD HAT.
+# ARPO Controller (Automated Reflex to Power Outage)
 
-## Features
-- Reads grid voltage
-- Reads battery voltage
-- Detects grid outage
-- Controls relay switching between grid and backup
+## Overview
+ARPO is a Raspberry Pi–based system designed to automatically detect grid power loss and safely transfer a load to a backup power source. The system also manages the return to grid power when conditions are stable.
 
-## Folder Structure
-- `config/` adjustable settings
-- `src/` source code
-- `docs/` wiring notes
+---
 
-## Setup
+## Current Features
+- ADC-based voltage sensing (grid and battery)
+- Grid failure detection using voltage threshold
+- Grid restore logic using:
+  - Voltage threshold (hysteresis)
+  - Frequency check (placeholder)
+- Safe relay switching with transfer delay (< 2 seconds)
+- Inverter control module integration
+- Real-time logging of system behavior
+
+---
+
+## System Architecture
+
+---
+
+## Safety Logic
+- Grid fail threshold and restore threshold are separated to prevent oscillation
+- Frequency must be within acceptable range before returning to grid
+- Relay and inverter switching is sequenced with delay to prevent unsafe transitions
+
+---
+
+## Hardware Context
+- Load: ~100 W
+- Backup system: 12 V battery + inverter
+- Grid: 120 VAC
+- ADC used for voltage sensing (scaled input)
+
+---
+
+## Team Roles
+- **Cel (you):**
+  - Software architecture
+  - ADC integration
+  - Grid detection logic
+  - High-voltage system collaboration
+
+- **Teammate 1:**
+  - Inverter design and implementation
+
+- **Teammate 2:**
+  - High-voltage switching / power stage
+
+---
+
+## Running the Project
+
 ```bash
-git clone <your-repo-url>
-cd arpo-controller
-chmod +x setup.sh run.sh
-./setup.sh
+cd ~/arpo-controller
 ./run.sh
