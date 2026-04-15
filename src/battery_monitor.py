@@ -2,7 +2,11 @@ from app_config.settings import BATTERY_LOW_THRESHOLD
 
 
 def read_battery_voltage(adc_reader) -> float:
-    return adc_reader.read_named_channel("battery")
+    return adc_reader.read_named_channel("battery_voltage")
+
+
+def read_battery_current(adc_reader) -> float:
+    return adc_reader.read_named_channel("battery_current")
 
 
 def is_battery_low(adc_reader) -> bool:
