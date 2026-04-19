@@ -7,16 +7,24 @@ class LCDDisplay:
         self.enabled = False
         self.driver = None
 
-        try:
-            self.driver = LCDDriver()
-            self.enabled = True
-            self.show_message("ARPO System", "LCD Ready")
-            time.sleep(1)
-            self.clear()
-            print("[LCD] LCD initialized.")
-        except Exception as e:
-            print(f"[LCD] LCD unavailable: {e}")
-            self.enabled = False
+        # Give the LCD bus a moment before first access
+        time.sleep(1)
+
+        for attempt in range(3):
+            try:
+                self.driver = LCDDriver()
+                self.enabled = True
+                self.show_message("ARPO System", "LCD Ready")
+                time.sleep(1)
+                self.clear()
+                print("[LCD] LCD initialized.")
+                break
+            except Exception as e:
+                print(f"[LCD] Init attempt {attempt + 1} failed: {e}")
+                time.sleep(1)
+
+        if not self.enabled:
+            print("[LCD] LCD unavailable after retries.")
 
     def clear(self):
         if self.enabled and self.driver:
@@ -28,15 +36,19 @@ class LCDDisplay:
         self.driver.write_line(line1, 1)
         self.driver.write_line(line2, 2)
 
-    def show_status(self, grid_failed, battery_low, relay_state, inverter_state):
-        line1 = "GRID:FAIL" if grid_failed else "GRID:ON"
-        line2 = "BATT:LOW" if battery_low else "BATT:OK"
-        self.show_message(line1, line2)
+    def show_status(self, mode, grid_failed, battery_low, inverter_state):
+        line1 = f"MODE:{mode}"[:16]
 
-    def show_mode(self, relay_state, inverter_state):
-        relay_text = f"R:{relay_state}" if relay_state else "R:UNK"
-        inverter_text = f"I:{inverter_state}"
-        self.show_message(relay_text[:16], inverter_text[:16])
+        if mode == "GRID":
+            line2 = "GRID OK BATT OK"
+        elif mode == "BACKUP":
+            line2 = "GRID FAIL INV ON"
+        elif mode == "FAULT":
+            line2 = "BATT LOW"
+        else:
+            line2 = f"INV:{inverter_state}"
+
+        self.show_message(line1[:16], line2[:16])
 
     def cleanup(self):
         self.clear()
