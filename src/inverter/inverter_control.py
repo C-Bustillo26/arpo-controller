@@ -2,12 +2,10 @@ import RPi.GPIO as GPIO
 import time
 
 class InverterController:
-    def __init__(self, pin1=17, pin2=18, pin3=27, pin4=22, frequency=60, dead_time=10e-6):
+    def __init__(self, pin1=23, pin2=24, frequency=60, dead_time=10e-6):
         self.pin1 = pin1   # Left High side
-        self.pin2 = pin2   # Left Low side
-        self.pin3 = pin3   # Right High side
-        self.pin4 = pin4   # Right Low side
-        
+        self.pin2 = pin2   # Right High side
+                
         self.frequency = frequency      # Default: 60 Hz
         self.dead_time = dead_time      # Default: 10 us
         self.running = False
@@ -17,7 +15,7 @@ class InverterController:
     def _setup_gpio(self):
         """Setup GPIO pins for H-bridge"""
         GPIO.setmode(GPIO.BCM)
-        for pin in [self.pin1, self.pin2, self.pin3, self.pin4]:
+        for pin in [self.pin1, self.pin2]:
             GPIO.setup(pin, GPIO.OUT)
             GPIO.output(pin, 0)  # Safe initial state
 
@@ -36,7 +34,7 @@ class InverterController:
             self.running = False
         
         # All pins LOW = safe state
-        for pin in [self.pin1, self.pin2, self.pin3, self.pin4]:
+        for pin in [self.pin1, self.pin2]:
             GPIO.output(pin, 0)
 
     def status(self):
@@ -54,35 +52,32 @@ class InverterController:
             while self.running:
                 # === Positive half-cycle ===
                 GPIO.output(self.pin2, 0)
-                GPIO.output(self.pin3, 0)
                 time.sleep(self.dead_time)
 
                 GPIO.output(self.pin1, 1)
-                GPIO.output(self.pin4, 1)
                 time.sleep(half_period - self.dead_time)
 
-                if not self.running:
-                    break
+                #if not self.running:
+                 #   break
 
                 # === Dead time transition ===
                 GPIO.output(self.pin1, 0)
-                GPIO.output(self.pin4, 0)
                 time.sleep(self.dead_time)
 
                 # === Negative half-cycle ===
                 GPIO.output(self.pin2, 1)
-                GPIO.output(self.pin3, 1)
                 time.sleep(half_period - self.dead_time)
 
-                if not self.running:
-                    break
+               # if not self.running:
+                   # break
 
                 # === Dead time before next cycle ===
                 GPIO.output(self.pin2, 0)
-                GPIO.output(self.pin3, 0)
                 time.sleep(self.dead_time)
 
         except KeyboardInterrupt:
+            GPIO.output(self.pin1, 0)
+            GPIO.output(self.pin2, 0)
             print("\n[Inverter] Interrupted by user")
         finally:
             self.stop()
@@ -95,7 +90,7 @@ class InverterController:
 
     def set_dead_time(self, new_dead_time_us):
         """Change dead time in microseconds"""
-        new_dt = new_dead_time_us * 1e-6
+        new_dt = new_dead_time_us * 0.016
         if new_dt >= 0:
             self.dead_time = new_dt
             print(f"[Inverter] Dead time updated to {new_dead_time_us} us")
