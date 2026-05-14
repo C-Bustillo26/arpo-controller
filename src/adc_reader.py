@@ -1,13 +1,12 @@
+import math
 import sys
 from pathlib import Path
 
-# Add Waveshare ADC library path dynamically
 LIB_PATH = Path.home() / "High-Pricision_AD_HAT" / "python"
 
 if not LIB_PATH.exists():
     raise FileNotFoundError(
-        f"[ERROR] Waveshare ADC library not found at: {LIB_PATH}\n"
-        "Make sure you cloned the Waveshare repo correctly."
+        f"[ERROR] Waveshare ADC library not found at: {LIB_PATH}"
     )
 
 sys.path.insert(0, str(LIB_PATH))
@@ -22,55 +21,73 @@ class ADCReader:
 
         self.adc = ADS1263.ADS1263()
 
-        if self.adc.ADS1263_init_ADC1('ADS1263_400SPS') == -1:
+        if self.adc.ADS1263_init_ADC1("ADS1263_400SPS") == -1:
             raise RuntimeError("[ADC] Initialization failed!")
+
+        self.adc.ADS1263_SetMode(0)
 
         self.channels = sorted(CHANNEL_SETTINGS.keys())
 
-        # ADS1263 settings
-        self.vref = 5.08      # adjust if your board/reference is different
-        self.full_scale = 0x7FFFFFFF  # 31-bit signed positive full-scale
+        self.ref = 2.5
+        self.full_scale = 0x7FFFFFFF
+        self.default_samples = 1000
 
         print(f"[ADC] Initialization complete. Channels: {self.channels}")
 
-    def read_all_raw(self):
-        try:
-            return self.adc.ADS1263_GetAll(self.channels)
-        except Exception as e:
-            print(f"[ADC ERROR] read_all_raw failed: {e}")
-            return [0] * len(self.channels)
-
     def raw_to_voltage(self, raw_value):
-        # Handle signed conversion if needed
         if raw_value & 0x80000000:
             raw_value = raw_value - 0x100000000
 
-        voltage = (raw_value / self.full_scale) * self.vref
-        return voltage
+        return raw_value * self.ref / self.full_scale
 
     def read_channel_raw(self, channel: int):
-        values = self.read_all_raw()
-
         if channel not in self.channels:
             raise ValueError(f"[ADC ERROR] Invalid channel: {channel}")
 
-        idx = self.channels.index(channel)
-        return int(values[idx])
+        return self.adc.ADS1263_GetChannalValue(channel)
+
+    def read_channel_voltage(self, channel: int) -> float:
+        raw_value = self.read_channel_raw(channel)
+        return self.raw_to_voltage(raw_value)
+
+    def capture_voltage_rms(self, channel: int, samples_count=None) -> dict:
+        if samples_count is None:
+            samples_count = self.default_samples
+
+        samples = []
+
+        for _ in range(samples_count):
+            raw = self.read_channel_raw(channel)
+            voltage = self.raw_to_voltage(raw)
+            samples.append(voltage)
+
+        mean = sum(samples) / len(samples)
+        ac = [x - mean for x in samples]
+        vrms_pi = math.sqrt(sum(x * x for x in ac) / len(ac))
+
+        return {
+            "dc_offset": mean,
+            "vrms_pi": vrms_pi,
+        }
 
     def read_channel_scaled(self, channel: int) -> float:
-        raw_value = self.read_channel_raw(channel)
-        adc_voltage = self.raw_to_voltage(raw_value)
-
         config = CHANNEL_SETTINGS[channel]
+        name = config.get("name", "")
         scale = config.get("scale", 1.0)
         offset = config.get("offset", 0.0)
+        measurement_type = config.get("type", "dc")
 
-        return (adc_voltage * scale) + offset
+        if measurement_type == "ac_rms":
+            rms_data = self.capture_voltage_rms(channel)
+            return (rms_data["vrms_pi"] * scale) + offset
+
+        voltage = self.read_channel_voltage(channel)
+        return (voltage * scale) + offset
 
     def read_named_channel(self, name: str) -> float:
-        for ch, cfg in CHANNEL_SETTINGS.items():
-            if cfg.get("name") == name:
-                return self.read_channel_scaled(ch)
+        for channel, config in CHANNEL_SETTINGS.items():
+            if config.get("name") == name:
+                return self.read_channel_scaled(channel)
 
         raise ValueError(f"[ADC ERROR] No channel configured with name: {name}")
 

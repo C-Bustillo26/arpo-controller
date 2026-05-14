@@ -3,7 +3,7 @@ import logging
 
 from .adc_reader import ADCReader
 from .relay_control import RelayController
-from .inverter.inverter_stub import InverterController
+from .inverter.inverter_control import InverterController
 from .display.lcd_display import LCDDisplay
 from .utils import timestamp
 from app_config.settings import POLL_INTERVAL, LOG_FILE
@@ -21,7 +21,7 @@ GRID_RESTORE_THRESHOLD_ADC = 4.58
 BATTERY_LOW_THRESHOLD = 4.5
 
 # Test modes: NONE, "GRID", "BACKUP", "FAULT"
-TEST_MODE = "GRID"
+TEST_MODE = "BACKUP"
 
 def log_and_print(message: str):
     print(message)
@@ -126,8 +126,10 @@ def main():
             time.sleep(1)
             lcd.cleanup()
 
+        inverter.cleanup()
         relay.cleanup()
         adc_reader.close()
+       
 
 
 if __name__ == "__main__":
