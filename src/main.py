@@ -18,10 +18,10 @@ logging.basicConfig(
 # Weekly integration thresholds
 GRID_FAIL_THRESHOLD_ADC = 4.17
 GRID_RESTORE_THRESHOLD_ADC = 4.58
-BATTERY_LOW_THRESHOLD = 4.8
+BATTERY_LOW_THRESHOLD = 4.5
 
 # Test modes: NONE, "GRID", "BACKUP", "FAULT"
-TEST_MODE =None 
+TEST_MODE = "GRID"
 
 def log_and_print(message: str):
     print(message)
