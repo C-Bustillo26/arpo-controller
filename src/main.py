@@ -21,7 +21,14 @@ GRID_RESTORE_THRESHOLD_ADC = 4.58
 BATTERY_LOW_THRESHOLD = 4.5
 
 # Test modes: NONE, "GRID", "BACKUP", "FAULT"
-TEST_MODE = "BACKUP"
+# Test modes:
+# NONE     -> Real ADC-driven operation
+# GRID     -> Force normal grid mode
+# BACKUP   -> Force backup/inverter mode
+# FAULT    -> Force system fault mode
+#
+# Change TEST_MODE temporarily for subsystem debugging.
+TEST_MODE = "NONE"
 
 def log_and_print(message: str):
     print(message)
