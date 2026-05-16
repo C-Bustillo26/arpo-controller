@@ -6,7 +6,13 @@ from .relay_control import RelayController
 from .inverter.inverter_control import InverterController
 from .display.lcd_display import LCDDisplay
 from .utils import timestamp
-from app_config.settings import POLL_INTERVAL, LOG_FILE
+from app_config.settings import (
+    POLL_INTERVAL,
+    LOG_FILE,
+    GRID_FAIL_THRESHOLD_ADC,
+    GRID_RESTORE_THRESHOLD_ADC,
+    BATTERY_LOW_THRESHOLD,
+)
 
 
 logging.basicConfig(
@@ -15,10 +21,7 @@ logging.basicConfig(
     format="%(asctime)s | %(message)s"
 )
 
-# Weekly integration thresholds
-GRID_FAIL_THRESHOLD_ADC = 4.17
-GRID_RESTORE_THRESHOLD_ADC = 4.58
-BATTERY_LOW_THRESHOLD = 4.5
+
 
 # Test modes: NONE, "GRID", "BACKUP", "FAULT"
 # Test modes:
