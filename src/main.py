@@ -12,6 +12,7 @@ from app_config.settings import (
     GRID_FAIL_THRESHOLD_ADC,
     GRID_RESTORE_THRESHOLD_ADC,
     BATTERY_LOW_THRESHOLD,
+    Transfer_delay,
 )
 
 
@@ -95,13 +96,17 @@ def main():
 
             # Control relay + inverter stub
             if mode == "GRID":
-                relay.switch_to_grid()
-                inverter.stop()
+               inverter.stop()
+               time.sleep(TRANSFER_DELAY)
+               relay.switch_to_grid()
+
             elif mode == "BACKUP":
-                inverter.start()
-                relay.switch_to_battery()
+                 relay.switch_to_battery()
+                 time.sleep(TRANSFER_DELAY)
+                 inverter.start()
+
             elif mode == "FAULT":
-                inverter.stop()
+                 inverter.stop()
 
             message = (
                 f"[{timestamp()}] "
