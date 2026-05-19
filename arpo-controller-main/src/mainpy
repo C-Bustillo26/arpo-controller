@@ -1,0 +1,113 @@
+import time
+import logging
+
+from .adc_reader import ADCReader
+from .grid_monitor import read_grid_voltage, is_grid_failed, is_grid_restorable
+from .battery_monitor import read_battery_voltage, is_battery_low
+from .relay_control import RelayController
+from .inverter.inverter_control import InverterController
+from .utils import timestamp
+from app_config.settings import POLL_INTERVAL, LOG_FILE, TRANSFER_DELAY
+
+
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s | %(message)s"
+)
+
+
+def log_and_print(message: str):
+    print(message)
+    logging.info(message)
+
+
+def get_grid_frequency():
+    """
+    Placeholder for future frequency measurement.
+    Replace this with real measurement once your sensing method is finalized.
+    """
+    return 60.0
+
+
+def switch_to_backup(relay, inverter):
+    log_and_print("[System] Grid failed. Starting backup transfer sequence.")
+
+    inverter.start()
+    time.sleep(TRANSFER_DELAY)
+
+    relay.switch_to_battery()
+    time.sleep(TRANSFER_DELAY)
+
+    log_and_print("[System] Backup transfer complete.")
+
+
+def switch_to_grid(relay, inverter):
+    log_and_print("[System] Grid stable. Starting return-to-grid sequence.")
+
+    relay.switch_to_grid()
+    time.sleep(TRANSFER_DELAY)
+
+    inverter.stop()
+    time.sleep(TRANSFER_DELAY)
+
+    log_and_print("[System] Return-to-grid complete.")
+
+
+def main():
+    adc_reader = ADCReader()
+    relay = RelayController()
+    inverter = InverterController()
+
+    system_mode = None
+
+    log_and_print("ARPO controller started.")
+
+    try:
+        while True:
+            grid_voltage = read_grid_voltage(adc_reader)
+            battery_voltage = read_battery_voltage(adc_reader)
+            battery_low = is_battery_low(adc_reader)
+
+            grid_frequency = get_grid_frequency()
+
+            grid_failed = is_grid_failed(adc_reader)
+            grid_restorable = is_grid_restorable(adc_reader, grid_frequency)
+
+            message = (
+                f"[{timestamp()}] "
+                f"Grid Voltage: {grid_voltage:.3f} V | "
+                f"Battery Voltage: {battery_voltage:.3f} V | "
+                f"Grid Failed: {'YES' if grid_failed else 'NO'} | "
+                f"Grid Frequency: {grid_frequency:.2f} Hz | "
+                f"Grid Restorable: {'YES' if grid_restorable else 'NO'} | "
+                f"Battery Low: {'YES' if battery_low else 'NO'} | "
+                f"Relay: {relay.current_state if relay.current_state else 'UNKNOWN'} | "
+                f"Inverter: {inverter.status()}"
+            )
+            log_and_print(message)
+
+            if grid_failed:
+                if battery_low:
+                    log_and_print("[WARNING] Grid is down and battery is low. Backup transfer blocked.")
+                else:
+                    if system_mode != "BACKUP":
+                        switch_to_backup(relay, inverter)
+                        system_mode = "BACKUP"
+
+            else:
+                if grid_restorable:
+                    if system_mode != "GRID":
+                        switch_to_grid(relay, inverter)
+                        system_mode = "GRID"
+
+            time.sleep(POLL_INTERVAL)
+
+    except KeyboardInterrupt:
+        log_and_print("Stopping ARPO controller.")
+        relay.cleanup()
+        adc_reader.close()
+
+
+if __name__ == "__main__":
+    main()
