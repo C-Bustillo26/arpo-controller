@@ -5,3 +5,5 @@ __pycache__/
 .venv/
 venv/
 arpo_log.txt
+logs/
+apro-controller-rev2/logs/

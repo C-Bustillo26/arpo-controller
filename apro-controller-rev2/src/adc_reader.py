@@ -170,11 +170,12 @@ class ADCReader:
 	# ============================================================
 
         return {
-            "grid_voltage": self.read_named_channel("grid_voltage"),
-            "grid_current": self.read_named_channel("grid_current"),
-            "backup_voltage": self.read_named_channel("backup_voltage"),
-            "backup_current": self.read_named_channel("backup_current"),
-        }
+          "grid_voltage": self.read_named_channel("grid_voltage"),
+          "grid_current": self.read_named_channel("grid_current"),
+          "backup_voltage": self.read_named_channel("backup_voltage"),
+          "backup_current": self.read_named_channel("backup_current"),
+
+} 
 
     def close(self):
 

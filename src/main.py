@@ -12,7 +12,7 @@ from app_config.settings import (
     GRID_FAIL_THRESHOLD_ADC,
     GRID_RESTORE_THRESHOLD_ADC,
     BATTERY_LOW_THRESHOLD,
-    Transfer_delay,
+    TRANSFER_DELAY,
 )
 
 

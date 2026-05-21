@@ -12,13 +12,13 @@
 # Path used by the Waveshare ADS1263 example driver on the Raspberry Pi.
 # ============================================================
 
-ADC_DRIVER_PATH = "/home/justin/High-Pricision_AD_HAT/python"
+ADC_DRIVER_PATH = "/home/pi/High-Pricision_AD_HAT/python"
 
 # ============================================================
 # Fallback path in case the folder was created with the corrected spelling.
 # ============================================================
 
-ADC_DRIVER_PATH_FALLBACK = "/home/justin/High-Precision_AD_HAT/python"
+ADC_DRIVER_PATH_FALLBACK = "/home/pi/High-Pricision_AD_HAT/python"
 
 
 # ============================================================

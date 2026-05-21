@@ -1,23 +1,45 @@
-import os
+import RPi.GPIO as GPIO
 import time
 
-GPIO_A = 23  # left FQP + right IRL
-GPIO_B = 24  # right FQP + left IRL
+LEFT_IRL = 23      # left low-side N-MOSFET
+RIGHT_IRL = 24     # change if your right IRL uses different GPIO
 
-half_cycle = 1 / 120      # 8.33 ms for 60 Hz output
-dead_time = 0.0005        # 0.5 ms
+HALF_PERIOD = 0.0083   # ~60 Hz half-cycle
+DEAD_TIME = 0.010      # 10 ms debug dead time
 
-while True:
-    os.system(f"pinctrl set {GPIO_A} op dl")
-    os.system(f"pinctrl set {GPIO_B} op dl")
-    time.sleep(dead_time)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LEFT_IRL, GPIO.OUT)
+GPIO.setup(RIGHT_IRL, GPIO.OUT)
 
-    os.system(f"pinctrl set {GPIO_A} op dh")
-    time.sleep(half_cycle - dead_time)
+def all_off():
+    GPIO.output(LEFT_IRL, GPIO.LOW)
+    GPIO.output(RIGHT_IRL, GPIO.LOW)
 
-    os.system(f"pinctrl set {GPIO_A} op dl")
-    os.system(f"pinctrl set {GPIO_B} op dl")
-    time.sleep(dead_time)
+try:
+    print("Starting inverter debug test...")
+    print(f"Dead time = {DEAD_TIME} seconds")
 
-    os.system(f"pinctrl set {GPIO_B} op dh")
-    time.sleep(half_cycle - dead_time)
+    all_off()
+    time.sleep(1)
+
+    while True:
+        # Left side ON
+        all_off()
+        time.sleep(DEAD_TIME)
+        GPIO.output(LEFT_IRL, GPIO.HIGH)
+        time.sleep(HALF_PERIOD)
+
+        # Dead time
+        all_off()
+        time.sleep(DEAD_TIME)
+
+        # Right side ON
+        GPIO.output(RIGHT_IRL, GPIO.HIGH)
+        time.sleep(HALF_PERIOD)
+
+except KeyboardInterrupt:
+    print("Stopping inverter test...")
+
+finally:
+    all_off()
+    GPIO.cleanup()
